@@ -18,3 +18,17 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class PaperResponse(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    status: str
+    chunk_count: int
+
+    class Config:
+        from_attributes = True
+
+class ChatRequest(BaseModel):
+    paper_id: str
+    message: str = ""

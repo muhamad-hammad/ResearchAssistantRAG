@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends
-from .routers import auth
+from .routers import auth, papers, chat
 from . import models
 from .database import engine
 from .dependencies import get_current_user
@@ -7,6 +7,8 @@ from .dependencies import get_current_user
 app = FastAPI(title="Research Assistant API")
 
 app.include_router(auth.router)
+app.include_router(papers.router)
+app.include_router(chat.router)
 
 @app.get("/api/protected")
 def protected_route(current_user: models.User = Depends(get_current_user)):
