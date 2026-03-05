@@ -13,3 +13,6 @@ langchain-community
 PyMuPDF
 sentence-transformers
 faiss-cpu
+langchain-openai
+tenacity
+langgraph
