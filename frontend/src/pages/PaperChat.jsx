@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ForceGraph2D from 'react-force-graph-2d';
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "/api";
 
 export default function PaperChat() {
     const { paperId } = useParams();
