@@ -16,3 +16,5 @@ faiss-cpu
 langchain-openai
 tenacity
 langgraph
+celery[redis]
+redis

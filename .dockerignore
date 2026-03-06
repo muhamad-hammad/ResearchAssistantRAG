@@ -1,0 +1,32 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Dev/test files
+.env
+*.md
+tests/
+test_*.py
+*.txt
+!requirements.txt
+alembic_*.txt
+
+# Version control
+.git/
+.gitignore
+
+# OS
+.DS_Store
+*.swp
+
+# Node (not needed in backend image)
+frontend/
+node_modules/
+
+# Local uploads and vector stores (mounted as volumes)
+uploads/
+vector_stores/
