@@ -8,7 +8,7 @@ from app.database import get_db
 from app.models import Paper, User
 from app.schemas import PaperResponse
 from app.dependencies import get_current_user
-from app.services.pdf_pipeline import process_pdf_sync
+from app.worker import process_pdf_task
 
 router = APIRouter(
     prefix="/api/papers",
@@ -20,7 +20,6 @@ UPLOAD_DIR = "uploads"
 
 @router.post("/upload", response_model=PaperResponse)
 async def upload_paper(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -39,13 +38,13 @@ async def upload_paper(
     db.commit()
     db.refresh(new_paper)
 
-    # Save file locally
+    # Save file locally (AWS S3 alternative path to be added here if needed)
     file_path = os.path.join(UPLOAD_DIR, f"{new_paper.id}.pdf")
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Use BackgroundTasks so the user can immediately get the paper ID and poll status
-    background_tasks.add_task(process_pdf_sync, str(new_paper.id), file_path, current_user.id)
+    # Dispatch to Celery Background Worker Queue
+    process_pdf_task.delay(str(new_paper.id), file_path, current_user.id)
 
     return new_paper
 
