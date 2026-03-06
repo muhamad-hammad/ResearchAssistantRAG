@@ -14,8 +14,12 @@ qa_prompt = ChatPromptTemplate.from_messages([
     ("human", "Context:\n{context}\n\nQuestion: {question}")
 ])
 
+_embeddings = None
 def get_embeddings():
-    return HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+    global _embeddings
+    if _embeddings is None:
+        _embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+    return _embeddings
 
 def format_docs(docs):
     formatted = []
@@ -55,7 +59,7 @@ def generate_answer(paper_id: str, question: str, streaming: bool = False):
     # since the retry wrapper fully consumes the result before returning.
     # Retry logic is mainly for non-streaming standard invocations.
     if streaming:
-        return llm.stream(prompt_val.to_messages()), docs
+        return llm.astream(prompt_val.to_messages()), docs
         
     # Standard invocation with retry
     response = invoke_with_retry(llm, prompt_val.to_messages())

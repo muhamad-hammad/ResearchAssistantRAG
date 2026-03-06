@@ -40,8 +40,9 @@ async def upload_paper(
 
     # Save file locally (AWS S3 alternative path to be added here if needed)
     file_path = os.path.join(UPLOAD_DIR, f"{new_paper.id}.pdf")
+    content = await file.read()
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(content)
 
     # Dispatch to Celery Background Worker Queue
     process_pdf_task.delay(str(new_paper.id), file_path, current_user.id)
@@ -59,3 +60,19 @@ def get_paper_status(paper_id: int, db: Session = Depends(get_db), current_user:
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
     return {"status": paper.status}
+
+@router.delete("/{paper_id}")
+def delete_paper(paper_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    paper = db.query(Paper).filter(Paper.id == paper_id, Paper.user_id == current_user.id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Delete from file system
+    file_path = os.path.join(UPLOAD_DIR, f"{paper.id}.pdf")
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+    # Delete from database
+    db.delete(paper)
+    db.commit()
+    return {"status": "success", "message": "Paper deleted successfully"}

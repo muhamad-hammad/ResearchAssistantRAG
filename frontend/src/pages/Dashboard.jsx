@@ -70,6 +70,25 @@ export default function Dashboard() {
         }
     };
 
+    const handleDelete = async (e, paperId) => {
+        e.stopPropagation();
+        if (!window.confirm("Are you sure you want to delete this paper?")) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/papers/${paperId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                fetchPapers();
+            } else {
+                alert("Failed to delete paper.");
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     const onDrag = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -144,18 +163,29 @@ export default function Dashboard() {
                                 {new Date(paper.created_at || Date.now()).toLocaleDateString()}
                             </span>
 
-                            <span style={{
-                                padding: '0.25rem 0.75rem',
-                                borderRadius: '99px',
-                                fontSize: '0.8rem',
-                                fontWeight: 'bold',
-                                backgroundColor: paper.status === 'ready' ? 'var(--success-color)' :
-                                    paper.status === 'failed' ? 'var(--error-color)' :
-                                        'var(--accent-primary)',
-                                color: 'white'
-                            }}>
-                                {paper.status.toUpperCase()}
-                            </span>
+                            <div>
+                                <span style={{
+                                    padding: '0.25rem 0.75rem',
+                                    borderRadius: '99px',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 'bold',
+                                    backgroundColor: paper.status === 'ready' ? 'var(--success-color)' :
+                                        paper.status === 'failed' ? 'var(--error-color)' :
+                                            'var(--accent-primary)',
+                                    color: 'white'
+                                }}>
+                                    {paper.status.toUpperCase()}
+                                </span>
+                                <button
+                                    onClick={(e) => handleDelete(e, paper.id)}
+                                    style={{
+                                        background: 'none', border: 'none', color: 'var(--error-color)', cursor: 'pointer', marginLeft: '10px', fontSize: '1.2rem'
+                                    }}
+                                    title="Delete paper"
+                                >
+                                    🗑️
+                                </button>
+                            </div>
                         </div>
 
                         {paper.status === 'processing' && (

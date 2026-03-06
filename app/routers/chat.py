@@ -6,6 +6,7 @@ from app.schemas import ChatRequest
 from app.services.workflow.graph import build_graph
 from app.services.rag_chain import generate_answer
 import json
+import asyncio
 
 router = APIRouter(
     prefix="/api/chat",
@@ -18,14 +19,16 @@ graph = build_graph()
 @router.post("/stream")
 async def chat_stream(request: ChatRequest, current_user: User = Depends(get_current_user)):
     try:
-        # Use existing rag_chain to support simple token streaming
-        response_stream, _ = generate_answer(request.paper_id, request.message, streaming=True)
+        # generate_answer loads FAISS index (sync). Run in thread so event loop stays unblocked.
+        response_stream, _ = await asyncio.to_thread(generate_answer, request.paper_id, request.message, True)
         
-        def token_generator():
-            for chunk in response_stream:
-                yield chunk.content
+        async def token_generator():
+            async for chunk in response_stream:
+                if chunk.content:
+                    yield f"data: {json.dumps({'event': 'token', 'data': chunk.content})}\n\n"
+            yield f"data: {json.dumps({'event': 'end'})}\n\n"
                 
-        return StreamingResponse(token_generator(), media_type="text/plain")
+        return StreamingResponse(token_generator(), media_type="text/event-stream")
         
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Paper index not found. Has it finished processing?")
@@ -43,7 +46,8 @@ async def chat_explain(request: ChatRequest, current_user: User = Depends(get_cu
         "error": None
     }
     
-    final_state = graph.invoke(initial_state)
+    # graph.invoke is synchronous. Run in thread so event loop stays unblocked.
+    final_state = await asyncio.to_thread(graph.invoke, initial_state)
     if final_state.get("error"):
         raise HTTPException(status_code=400, detail=final_state["error"])
         
@@ -63,7 +67,8 @@ async def chat_visualize(request: ChatRequest, current_user: User = Depends(get_
         "error": None
     }
     
-    final_state = graph.invoke(initial_state)
+    # graph.invoke is synchronous. Run in thread so event loop stays unblocked.
+    final_state = await asyncio.to_thread(graph.invoke, initial_state)
     if final_state.get("error"):
         raise HTTPException(status_code=400, detail=final_state["error"])
         

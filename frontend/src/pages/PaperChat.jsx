@@ -75,8 +75,9 @@ export default function PaperChat() {
                 body: JSON.stringify({ paper_id: paperId })
             });
             if (response.status === 401) return logout();
+            if (!response.ok) throw new Error("Explain failed: " + response.status);
             const data = await response.json();
-            setExplainData(data.explain);
+            setExplainData(data);
         } catch (e) {
             console.error(e);
             setExplainData({ error: 'Failed to load explanation.' });
@@ -97,8 +98,9 @@ export default function PaperChat() {
                 body: JSON.stringify({ paper_id: paperId })
             });
             if (response.status === 401) return logout();
+            if (!response.ok) throw new Error("Visualize failed: " + response.status);
             const data = await response.json();
-            setVisualizeData(data.visualize || { nodes: [], edges: [] });
+            setVisualizeData(data.nodes ? data : { nodes: [], edges: [] });
         } catch (e) {
             console.error(e);
             setVisualizeData({ nodes: [], edges: [] });
@@ -139,16 +141,22 @@ export default function PaperChat() {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let done = false;
+            let buffer = '';
 
             while (!done) {
                 const { value, done: doneReading } = await reader.read();
                 done = doneReading;
-                const chunkValue = decoder.decode(value);
+                if (value) {
+                    buffer += decoder.decode(value, { stream: true });
+                }
 
-                const lines = chunkValue.split('\n');
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // keep incomplete chunk
+
                 for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const dataStr = line.replace('data: ', '');
+                    const trimmedLine = line.trim();
+                    if (trimmedLine.startsWith('data: ')) {
+                        const dataStr = trimmedLine.replace('data: ', '');
                         try {
                             const data = JSON.parse(dataStr);
                             if (data.event === 'token' && data.data) {
