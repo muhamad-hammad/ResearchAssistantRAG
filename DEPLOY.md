@@ -6,7 +6,7 @@
 
 ## What You Need Before Starting
 - [ ] AWS account (free tier activated)
-- [ ] Grok API key from [console.x.ai](https://console.x.ai)
+- [ ] Google Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikeys)
 - [ ] Your project code on GitHub
 
 ---
@@ -147,8 +147,9 @@ POSTGRES_PASSWORD=mypassword
 POSTGRES_DB=research_rag
 REDIS_URL=redis://redis:6379/0
 SECRET_KEY=paste-a-long-random-string-here
-LLM_PROVIDER=grok
-GROK_API_KEY=xai-your-actual-grok-key-here
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your-actual-gemini-api-key-here
+GEMINI_MODEL=gemini-2.0-flash
 ```
 
 > **Tip:** Generate a random SECRET_KEY with: `python3 -c "import secrets; print(secrets.token_hex(32))"`

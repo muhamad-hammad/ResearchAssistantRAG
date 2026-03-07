@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables (local secrets)
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and error files
+alembic_err.txt
+alembic_out.txt
+*.log
+
+# Generated data
+uploads/
+vector_stores/
+*.db
+*.sqlite
+
+# Node modules (frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Misc
+*.tmp
+.pytest_cache/
+.coverage
+htmlcov/
