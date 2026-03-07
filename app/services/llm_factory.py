@@ -38,7 +38,7 @@ def get_llm(streaming=False):
         return ChatOpenAI(
             api_key=api_key,
             base_url="https://api.x.ai/v1",
-            model="grok-beta", # Update to accurate grok model name if necessary
+            model=os.getenv("GROK_MODEL", "grok-2-latest"),
             streaming=streaming
         )
     elif provider == "ollama":
