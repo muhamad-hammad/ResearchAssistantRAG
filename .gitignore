@@ -66,3 +66,7 @@ yarn-error.log
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Test / scratch files
+test_paper.pdf
+*.test.pdf
