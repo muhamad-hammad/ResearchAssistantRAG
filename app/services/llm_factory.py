@@ -24,10 +24,22 @@ def invoke_with_retry(llm, messages):
 def get_llm(streaming=False):
     """
     Factory function to get the appropriate LLM based on environment variables.
-    Supports 'gemini' (free API via OpenAI-compatible endpoint) and 'ollama'.
-    Defaults to 'gemini'.
+    Supports 'openai', 'gemini', 'grok', and 'ollama'.
+    Defaults to 'openai'.
     """
-    provider = os.getenv("LLM_PROVIDER", "gemini").lower()
+    provider = os.getenv("LLM_PROVIDER", "openai").lower()
+
+    if provider == "openai":
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("WARNING: OPENAI_API_KEY not found. Falling back to Ollama.")
+            return get_ollama_llm(streaming)
+        return ChatOpenAI(
+            api_key=api_key,
+            model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+            streaming=streaming
+        )
+
 
     if provider == "gemini":
         api_key = os.getenv("GEMINI_API_KEY")
