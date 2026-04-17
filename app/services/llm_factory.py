@@ -63,7 +63,9 @@ def get_llm(streaming=False):
 
 def get_ollama_llm(streaming=False):
     model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     return ChatOllama(
         model=model_name,
+        base_url=base_url,
         streaming=streaming
     )
