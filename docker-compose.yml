@@ -30,6 +30,7 @@ services:
     volumes:
       - uploads:/app/uploads
       - vector_stores:/app/vector_stores
+      - hf_cache:/root/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy
@@ -52,6 +53,7 @@ services:
     volumes:
       - uploads:/app/uploads
       - vector_stores:/app/vector_stores
+      - hf_cache:/root/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy
@@ -74,3 +76,4 @@ volumes:
   postgres_data:
   uploads:
   vector_stores:
+  hf_cache:
