@@ -35,32 +35,20 @@ def load_faiss_index(paper_id: str):
     embeddings = get_embeddings()
     return FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
 
-def generate_answer(paper_id: str, question: str, streaming: bool = False):
+def generate_answer(paper_id: str, question: str):
     """
-    RAG Pipeline:
+    RAG Pipeline (non-streaming):
     1. Load FAISS Index
     2. Retrieve top-k chunks
     3. Format context
-    4. Pass to LLM via prompt
-    5. Return output
+    4. Invoke LLM with retry
+    5. Return (text, docs)
     """
     vector_store = load_faiss_index(paper_id)
     retriever = vector_store.as_retriever(search_kwargs={"k": 3})
-    
-    llm = get_llm(streaming=streaming)
-    
-    # Retrieve documents to include citations
+    llm = get_llm()
     docs = retriever.invoke(question)
     context_str = format_docs(docs)
-
     prompt_val = qa_prompt.format_prompt(context=context_str, question=question)
-
-    # For streaming, we want to return the generator directly instead of the retry wrapper
-    # since the retry wrapper fully consumes the result before returning.
-    # Retry logic is mainly for non-streaming standard invocations.
-    if streaming:
-        return llm.astream(prompt_val.to_messages()), docs
-        
-    # Standard invocation with retry
     response = invoke_with_retry(llm, prompt_val.to_messages())
     return response.content, docs
