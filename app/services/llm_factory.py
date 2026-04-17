@@ -41,7 +41,7 @@ def get_llm(streaming=False):
         )
 
 
-    if provider == "gemini":
+    elif provider == "gemini":
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             print("WARNING: GEMINI_API_KEY not found. Falling back to Ollama.")
