@@ -2,21 +2,24 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from openai import RateLimitError, APIConnectionError, APITimeoutError
 
 # Create a custom exception if we need to wrap specific provider errors
 class LLMRateLimitError(Exception):
     pass
 
-# Retry decorator: retries up to 3 times, waiting 2^x seconds between retries (2s, 4s...)
+# Retry decorator: retries up to 3 times on transient errors (rate limits, network).
+# Non-retryable errors (403, 401, bad request) surface immediately.
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
-    retry=retry_if_exception_type((Exception, LLMRateLimitError)),
+    retry=retry_if_exception_type((RateLimitError, APIConnectionError, APITimeoutError)),
     reraise=True
 )
 def invoke_with_retry(llm, messages):
     """
-    Invokes the LLM with the provided messages, applying exponential backoff retries.
+    Invokes the LLM with the provided messages, applying exponential backoff retries
+    only for transient errors (rate limits, timeouts, connection drops).
     """
     return llm.invoke(messages)
 

@@ -19,17 +19,23 @@ graph = build_graph()
 @router.post("/stream")
 async def chat_stream(request: ChatRequest, current_user: User = Depends(get_current_user)):
     try:
-        # generate_answer loads FAISS index (sync). Run in thread so event loop stays unblocked.
-        response_stream, _ = await asyncio.to_thread(generate_answer, request.paper_id, request.message, True)
-        
+        # Step 1: Load FAISS index + retrieve docs synchronously in a thread (blocking I/O)
+        loop = asyncio.get_event_loop()
+        response_stream, _ = await loop.run_in_executor(
+            None, lambda: generate_answer(request.paper_id, request.message, True)
+        )
+
         async def token_generator():
-            async for chunk in response_stream:
-                if chunk.content:
-                    yield f"data: {json.dumps({'event': 'token', 'data': chunk.content})}\n\n"
-            yield f"data: {json.dumps({'event': 'end'})}\n\n"
-                
+            try:
+                async for chunk in response_stream:
+                    if chunk.content:
+                        yield f"data: {json.dumps({'event': 'token', 'data': chunk.content})}\n\n"
+                yield f"data: {json.dumps({'event': 'end'})}\n\n"
+            except Exception as stream_err:
+                yield f"data: {json.dumps({'event': 'error', 'data': str(stream_err)})}\n\n"
+
         return StreamingResponse(token_generator(), media_type="text/event-stream")
-        
+
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Paper index not found. Has it finished processing?")
     except Exception as e:

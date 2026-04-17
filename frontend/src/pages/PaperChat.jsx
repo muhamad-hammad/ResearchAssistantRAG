@@ -173,16 +173,21 @@ export default function PaperChat() {
                                 });
                             } else if (data.event === 'end') {
                                 break;
+                            } else if (data.event === 'error') {
+                                throw new Error(data.data || 'LLM stream error');
                             }
-                        } catch (err) { }
+                        } catch (err) { if (err.message && err.message !== 'JSON Parse error') throw err; }
                     }
                 }
             }
         } catch (e) {
+            const errMsg = e?.message && e.message !== 'Stream failed'
+                ? `Error: ${e.message}`
+                : 'Sorry, an error occurred while connecting to the LLM.';
             setMessages(prev => {
                 const newMsgs = [...prev];
                 const lastIndex = newMsgs.length - 1;
-                newMsgs[lastIndex] = { role: 'assistant', content: "Sorry, an error occurred while connecting to the LLM." };
+                newMsgs[lastIndex] = { role: 'assistant', content: errMsg };
                 return newMsgs;
             });
         } finally {
@@ -203,7 +208,7 @@ export default function PaperChat() {
             { id: 'methodology', title: 'Methodology' },
             { id: 'results', title: 'Results' },
             { id: 'limitations', title: 'Limitations' },
-            { id: 'eli5_summary', title: 'ELI5 Summary' }
+            { id: 'eli5', title: 'ELI5 Summary' }
         ];
 
         return (

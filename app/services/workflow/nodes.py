@@ -4,6 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from app.services.rag_chain import load_faiss_index, format_docs
 from app.services.llm_factory import get_llm, invoke_with_retry
 from app.services.workflow.state import GraphState
+from openai import PermissionDeniedError, AuthenticationError, BadRequestError
 
 def retrieve_node(state: GraphState) -> GraphState:
     """
@@ -53,12 +54,17 @@ def chat_node(state: GraphState) -> GraphState:
     return state
 
 def extract_json(text: str) -> str:
-    """Defensive JSON extractor to handle LLM markdown ticks."""
+    """Defensive JSON extractor: strips markdown fences and slices first { to last }."""
     text = text.strip()
-    # Find everything between first { and last }
-    match = re.search(r'\{.*\}', text, re.DOTALL)
-    if match:
-        return match.group(0)
+    # Strip markdown code fences (```json ... ``` or ``` ... ```)
+    text = re.sub(r'^```(?:json)?\s*', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\s*```$', '', text)
+    text = text.strip()
+    # Slice from the first '{' to the last '}' to handle nested objects
+    start = text.find('{')
+    end = text.rfind('}')
+    if start != -1 and end != -1 and end > start:
+        return text[start:end + 1]
     return text
 
 def explain_node(state: GraphState) -> GraphState:
